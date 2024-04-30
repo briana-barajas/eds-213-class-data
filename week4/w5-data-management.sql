@@ -71,11 +71,22 @@ CREATE TABLE Snow_cover2 (
     Snow_cover INTEGER CHECK (Snow_cover > -1 AND Snow_cover < 101),
     Observer VARCHAR
 );
-
-.tables;
-
 -- 2. Import table
 COPY Snow_cover2 FROM 'snow_cover_fixedman_JB.csv' (HEADER TRUE);
 SELECT * FROM Snow_cover2;
 
 
+-- =============================================================
+--                     Intro to SQLite
+-- =============================================================
+-- NOTE: We have not loaded SQL lite, this code will not work with duckDB.
+
+-- Have nulls read in as NULL instead of blank strings
+CREATE TRIGGER Update_species
+    AFTER INSERT ON Species -- read in data
+    FOR EACH ROW
+    BEGIN
+        UPDATE Species
+        SET Scientific_name = NULL
+        WHERE Code = new.Code AND Scientific_name = '';
+    END;
