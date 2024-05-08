@@ -1,0 +1,83 @@
+---
+title: " Lecture 6.2 {dbplyr} "
+author: "Briana Barajas"
+date: 2024-05-08
+---
+
+```{r}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+```{r}
+require(devtools)
+install_version("duckdb", version = "0.9.2")
+```
+
+
+```{r}
+library(tidyverse)
+library(DBI)
+library(dbplyr)
+library(duckdb)
+library(here)
+```
+
+## Explore Database
+
+Connect to data:
+```{r}
+conn <- DBI::dbConnect(duckdb::duckdb(), dbir = "../week4/snow_database.db")
+dbListTables(conn)
+```
+
+```{r}
+# view list of tables
+dbListTables(conn)
+
+# store species table
+species <- tbl(conn, "Species")
+head(species, 4)
+```
+
+
+## SQL Queries
+```{r}
+# using dgGetQuery
+df <- dbGetQuery(conn, "SELECT * FROM Species WHERE Code LIKE 'a%'")
+df
+
+# using dbplyr
+species %>%
+  filter(Relevance=="Study species") %>%
+  select(Code, Scientific_name) %>%
+  arrange(Scientific_name) %>%
+  head(3)
+```
+
+## Modifying Tables
+
+Example: Group by relevance and count the number of species in each group
+```{r}
+species_group <- species %>% 
+  group_by(Relevance) %>% 
+  summarise(num_species = n()) %>% 
+  arrange(-num_species)
+```
+
+Example: Add "X" in front of the `Code` in the Species table
+```{r}
+new_species_code <- species %>% 
+  mutate(Code = paste0("X", Code)) %>% 
+  collect()
+```
+
+Example: Joining Tables
+```{r}
+eggs_db <- tbl(conn, "Bird_eggs")
+nests_db <- tblc
+
+left_join(nests_db, eggs_db, by="Nest_ID", keep = FALSE) %>%
+  head(5)
+```
+
+
