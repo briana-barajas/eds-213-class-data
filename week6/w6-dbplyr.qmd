@@ -9,8 +9,8 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 ```
 
 ```{r}
-# require(devtools)
-# install_version("duckdb", version = "0.9.2")
+require(devtools)
+install_version("duckdb", version = "0.9.2")
 ```
 
 
@@ -25,8 +25,14 @@ library(here)
 ## Explore Database
 
 Connect to data:
+
 ```{r}
-conn <- DBI::dbConnect(duckdb::duckdb(), dbir = "../week3/database.db")
+drv <- duckdb()
+conn <- DBI::dbConnect(drv, dbdir = "~/eds-213/eds-213-class-data/week3/database.db")
+```
+
+```{r}
+conn <- DBI::dbConnect(duckdb::duckdb(), dbir = here("week3/database.db"))
 dbListTables(conn)
 ```
 
@@ -35,7 +41,7 @@ dbListTables(conn)
 dbListTables(conn)
 
 # store species table
-species <- tbl(conn, "Species")
+species <- tbl(conn, Species)
 head(species, 4)
 ```
 
