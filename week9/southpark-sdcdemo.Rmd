@@ -33,15 +33,18 @@ Q3. What would be the utility and information loss after implementing the anonym
 
 ```{r}
 library(sdcMicro)
+library(here)
+library(tidyverse)
 
-data <- read.csv("southpark-sdc.csv")
+data <- read_csv(here("week9","southpark-sdc.csv"))
+
 ```
 
 ### Review Data Structure
 
 ```{r}
 #Read the CSV dataset into a data frame
-df <- read.csv("southpark-sdc.csv")
+df <- read_csv(here("week9","southpark-sdc.csv"))
 
 #Show the list of variable names
 head(df)
@@ -52,6 +55,8 @@ str(df)
 
 ***Discussion: What variables can be considered direct identifiers? What variables are quasi or indirect identifiers?***
 
+__ANS:__ Direct identifiers would be social security number, name, and student id. Quasi identifiers can be data of birth, age, sec, and race.
+
 ## Data Prep - Converting variables
 
 As we can see, we will need to convert some of the variables first.
@@ -59,12 +64,12 @@ As we can see, we will need to convert some of the variables first.
 The variables *stu-id*, *SSN*, *name*, and *dob* will soon be removed from the dataset as they are direct identifiers. Let's focus on the remaining ones that need to be converted before we can proceed.
 
 ```{r}
-fname = "southpark-sdc.csv"
-file <- read.csv(fname)
+fname = here("week9", "southpark-sdc.csv")
+file <- read_csv(fname)
 file <- varToFactor(obj=file, var=c("zip","age", "sex","race","ethn", "snap", "income", "learn_dis","phys_dis"))
 
 #Convert to numeric math_sc and read_sc
-?
+file <- varToNumeric(obj = file, var = c("math_sc", "read_sc"))
 
 ```
 
@@ -81,21 +86,29 @@ To answer this question, we must first set up an ***SDC problem***. In other wor
 #Select categorical key variables - aka quasi-identifiers
 
 sdcInitial <- createSdcObj(dat=file,
-                       keyVars=c(?),
-                       numVars=c(?),
-                       weightVar=NULL,
-                       hhId=NULL,
-                       strataVar=NULL,
-                       pramVars=NULL,
-                       excludeVars=c(?),
-                       seed=0,
-                       randomizeRecords=FALSE,
-                       alpha=c(1))
+                           
+                           # quasi identifier
+                           keyVars=c("zip","age", "sex","race","ethn", "snap", "income", "learn_dis","phys_dis"),
+                           
+                           # numeric identifiers
+                           numVars=c("math_sc", "read_sc"),
+                           weightVar=NULL,
+                           hhId=NULL,
+                           strataVar=NULL,
+                           pramVars=NULL,
+                           
+                           # variables to exclude, direct identifiers 
+                           excludeVars=c(c("name","dob","ssn")),
+                           
+                           seed=0,
+                           randomizeRecords=FALSE,
+                           alpha=c(1))
 # Summary of object
-?
+sdcInitial
 ```
 
 **Discussion: What about the stu_id? Why are we keeping it?**
+__ANS:__ Student ID are being kept as a primary key to link the data table. At the end of the processing, student ID will be removed to preserve anonymity.
 
 Check the results below and the number of observations that violate 2-5 anonymity. What does that mean?
 
@@ -103,23 +116,23 @@ Check the results below and the number of observations that violate 2-5 anonymit
 
 ```{r}
 #The threshold depends on the size of the dataset and the access control (a conservative number for large surveys is 0.04)
-?
+
+# view global risk 
+sdcInitial@risk$global$risk
 ```
 
 Ouch! What does that score mean?
+__ANS:__ This means if we remove the direct identifiers, there's an 81% chance of re-identification through the entire data set.
 
-Well, our clients won't be pleased with that score. Let's see if we can lower it to less than 15% and a k=5.
 
-We have to do some work to reduce that, but that would be the first answer for our clients.
-
-We can further inspect this issue before moving to the second question.
+Well, our clients won't be pleased with that score. Let's see if we can lower it to less than 15% and a k=5. We have to do some work to reduce that, but that would be the first answer for our clients.We can further inspect this issue before moving to the second question.
 
 #### Which observations/subjects have a higher risk of being re-identified?
 
 ```{r}
-?
-
+sdcInitial@risk$individual
 ```
+__ANS:__ This displays the risk for each individual to be re-identified. You can tackle the global risk as a whole, or of it is more efficient tackle risk identifiers for specific individuals with notably higher risk.
 
 ### Q2. How can the risk of re-identification be significantly reduced?
 
